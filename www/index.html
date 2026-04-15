@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>理发店会员管理系统</title>
+<meta name="application-name" content="理发店会员管理系统">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="会员管理">
+<meta name="theme-color" content="#2563eb">
+<meta name="description" content="专业的理发店会员管理系统">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%232563eb' width='100' height='100' rx='20'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>会</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%232563eb' width='100' height='100' rx='20'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>会</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;min-height:100vh}
+.nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e0e0e0;display:flex;justify-content:space-around;padding:8px 0;padding-bottom:env(safe-area-inset-bottom)}
+.nav-item{display:flex;flex-direction:column;align-items:center;padding:8px 16px;color:#666;cursor:pointer;border:none;background:none;font-size:12px}
+.nav-item.active{color:#2563eb}
+.nav-item svg{width:24px;height:24px;margin-bottom:4px}
+.page{padding:16px;padding-bottom:80px}
+.page.hidden{display:none}
+.card{background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+.card-title{font-size:14px;color:#666;margin-bottom:8px}
+.card-value{font-size:24px;font-weight:bold}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.stat-card{text-align:center;padding:12px;border-radius:12px}
+.stat-card.green{background:linear-gradient(135deg,#dcfce7,#bbf7d0)}
+.stat-card.orange{background:linear-gradient(135deg,#ffedd5,#fed7aa)}
+.stat-card.blue{background:linear-gradient(135deg,#dbeafe,#bfdbfe)}
+.stat-label{font-size:12px;color:#666;margin-bottom:4px}
+.stat-value{font-size:20px;font-weight:bold}
+.stat-card.green .stat-value{color:#16a34a}
+.stat-card.orange .stat-value{color:#ea580c}
+.stat-card.blue .stat-value{color:#2563eb}
+.quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.quick-btn{display:flex;flex-direction:column;align-items:center;padding:16px 8px;background:white;border:1px solid #e0e0e0;border-radius:12px;cursor:pointer}
+.quick-btn svg{width:24px;height:24px;color:#2563eb;margin-bottom:8px}
+.quick-btn span{font-size:12px;color:#333}
+.member-item{display:flex;align-items:center;padding:16px;background:white;border-radius:12px;margin-bottom:12px;cursor:pointer}
+.member-avatar{width:48px;height:48px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;color:#2563eb;font-weight:bold;font-size:18px;margin-right:12px}
+.member-info{flex:1}
+.member-name{font-weight:500;margin-bottom:4px}
+.member-phone{font-size:12px;color:#666}
+.member-balance{font-weight:bold;color:#16a34a}
+.btn{padding:12px 24px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:500}
+.btn-primary{background:#2563eb;color:white}
+.btn-secondary{background:#f5f5f5;color:#333}
+.btn-danger{background:#ef4444;color:white}
+.btn-block{width:100%}
+.input{width:100%;padding:12px;border:1px solid #e0e0e0;border-radius:8px;font-size:16px;margin-bottom:12px}
+.input:focus{outline:none;border-color:#2563eb}
+.search-box{display:flex;gap:8px;margin-bottom:16px}
+.search-box input{flex:1}
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;z-index:1000}
+.modal.hidden{display:none}
+.modal-content{background:white;width:100%;max-width:500px;border-radius:16px 16px 0 0;padding:20px;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modal-title{font-size:18px;font-weight:bold}
+.modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:#666}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px}
+.badge-green{background:#dcfce7;color:#16a34a}
+.badge-orange{background:#ffedd5;color:#ea580c}
+.btn-group{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.section-title{font-size:16px;font-weight:600;margin-bottom:12px}
+.empty{text-align:center;padding:40px 20px;color:#666}
+.back-btn{background:none;border:none;padding:8px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.header{display:flex;align-items:center;padding:16px;background:white;border-bottom:1px solid #e0e0e0;position:sticky;top:0;z-index:100}
+.header-title{font-size:18px;font-weight:600;flex:1}
+.tx-item{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f0f0}
+.tx-info{font-size:14px}
+.tx-amount{font-weight:bold}
+.tx-amount.income{color:#16a34a}
+.tx-amount.expense{color:#ef4444}
+.tx-time{font-size:12px;color:#999;margin-top:4px}
+.balance-card{text-align:center;padding:24px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);border-radius:12px;margin-bottom:16px}
+.balance-label{font-size:14px;color:#16a34a;margin-bottom:8px}
+.balance-value{font-size:36px;font-weight:bold;color:#15803d}
+</style>
+</head>
+<body>
+<div id="page-home" class="page">
+<h1 style="font-size:20px;margin-bottom:16px">理发店会员管理</h1>
+<div class="section-title">今日概览</div>
+<div class="stats-grid">
+<div class="stat-card green"><div class="stat-label">今日充值</div><div class="stat-value" id="today-recharge">¥0</div></div>
+<div class="stat-card orange"><div class="stat-label">今日消费</div><div class="stat-value" id="today-consume">¥0</div></div>
+<div class="stat-card blue"><div class="stat-label">新会员</div><div class="stat-value" id="today-members">0</div></div>
+</div>
+<div class="section-title">快捷操作</div>
+<div class="quick-actions">
+<button class="quick-btn" onclick="showPage('members');showAddMemberModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg><span>添加会员</span></button>
+<button class="quick-btn" onclick="showPage('members')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>充值</span></button>
+<button class="quick-btn" onclick="showPage('members')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg><span>消费</span></button>
+<button class="quick-btn" onclick="showPage('members')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg><span>记录</span></button>
+</div>
+<div class="section-title">总体统计</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="card"><div class="card-title">会员总数</div><div class="card-value" id="total-members">0</div></div>
+<div class="card"><div class="card-title">累计充值</div><div class="card-value" id="total-recharge">¥0</div></div>
+</div>
+<div class="section-title" style="margin-top:16px">最近交易</div>
+<div class="card" id="recent-txs"><div class="empty">暂无交易记录</div></div>
+</div>
+<div id="page-members" class="page hidden">
+<div class="search-box"><input type="text" class="input" placeholder="搜索会员姓名或手机号" id="search-input" oninput="searchMembers()"><button class="btn btn-primary" onclick="showAddMemberModal()">+</button></div>
+<div id="member-list"></div>
+</div>
+<div id="page-member-detail" class="page hidden">
+<div class="header"><button class="back-btn" onclick="showPage('members')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button><div class="header-title">会员详情</div></div>
+<div id="member-detail-content"></div>
+</div>
+<div id="page-services" class="page hidden">
+<h1 style="font-size:20px;margin-bottom:16px">服务项目</h1>
+<button class="btn btn-primary btn-block" onclick="showAddServiceModal()" style="margin-bottom:16px">+ 添加服务</button>
+<div id="service-list"></div>
+</div>
+<div id="page-settings" class="page hidden">
+<h1 style="font-size:20px;margin-bottom:16px">设置</h1>
+<div class="card"><div class="card-title">应用信息</div><p>版本: 1.0.0</p><p style="margin-top:8px">数据存储在本地浏览器中</p></div>
+<div class="card" style="margin-top:12px"><div class="card-title">数据管理</div><button class="btn btn-secondary btn-block" onclick="exportData()">导出数据</button><button class="btn btn-danger btn-block" style="margin-top:8px" onclick="clearAllData()">清除所有数据</button></div>
+</div>
+<nav class="nav">
+<button class="nav-item active" onclick="showPage('home')" id="nav-home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>首页</span></button>
+<button class="nav-item" onclick="showPage('members')" id="nav-members"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>会员</span></button>
+<button class="nav-item" onclick="showPage('services')" id="nav-services"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg><span>服务</span></button>
+<button class="nav-item" onclick="showPage('settings')" id="nav-settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>设置</span></button>
+</nav>
+<div id="modal-add-member" class="modal hidden">
+<div class="modal-content"><div class="modal-header"><div class="modal-title">添加会员</div><button class="modal-close" onclick="closeModal('modal-add-member')">&times;</button></div><input type="text" class="input" placeholder="姓名 *" id="new-member-name"><input type="tel" class="input" placeholder="手机号 *" id="new-member-phone"><select class="input" id="new-member-gender"><option value="">选择性别</option><option value="male">男</option><option value="female">女</option></select><input type="date" class="input" id="new-member-birthday"><input type="number" class="input" placeholder="初始余额" id="new-member-balance"><button class="btn btn-primary btn-block" onclick="addMember()">添加会员</button></div>
+</div>
+<div id="modal-recharge" class="modal hidden">
+<div class="modal-content"><div class="modal-header"><div class="modal-title">会员充值</div><button class="modal-close" onclick="closeModal('modal-recharge')">&times;</button></div><div class="balance-card"><div class="balance-label">当前余额</div><div class="balance-value" id="recharge-current-balance">¥0</div></div><input type="number" class="input" placeholder="充值金额 *" id="recharge-amount"><input type="number" class="input" placeholder="赠送积分" id="recharge-points"><button class="btn btn-primary btn-block" onclick="doRecharge()">确认充值</button></div>
+</div>
+<div id="modal-consume" class="modal hidden">
+<div class="modal-content"><div class="modal-header"><div class="modal-title">会员消费</div><button class="modal-close" onclick="closeModal('modal-consume')">&times;</button></div><div class="balance-card"><div class="balance-label">当前余额</div><div class="balance-value" id="consume-current-balance">¥0</div></div><input type="number" class="input" placeholder="消费金额 *" id="consume-amount"><input type="text" class="input" placeholder="消费项目" id="consume-desc"><button class="btn btn-primary btn-block" onclick="doConsume()">确认消费</button></div>
+</div>
+<div id="modal-add-service" class="modal hidden">
+<div class="modal-content"><div class="modal-header"><div class="modal-title">添加服务</div><button class="modal-close" onclick="closeModal('modal-add-service')">&times;</button></div><input type="text" class="input" placeholder="服务名称 *" id="new-service-name"><input type="number" class="input" placeholder="价格 *" id="new-service-price"><input type="number" class="input" placeholder="时长(分钟)" id="new-service-duration"><button class="btn btn-primary btn-block" onclick="addService()">添加服务</button></div>
+</div>
+<script>
+const DB={get:k=>JSON.parse(localStorage.getItem(k)||'[]'),set:(k,d)=>localStorage.setItem(k,JSON.stringify(d)),getMembers:()=>DB.get('members'),setMembers:d=>DB.set('members',d),getTransactions:()=>DB.get('transactions'),setTransactions:d=>DB.set('transactions',d),getServices:()=>DB.get('services'),setServices:d=>DB.set('services',d)};
+let currentMemberId=null;
+function showPage(p){document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));document.getElementById('page-'+p).classList.remove('hidden');document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));document.getElementById('nav-'+p)?.classList.add('active');if(p==='home')refreshHome();if(p==='members')refreshMembers();if(p==='services')refreshServices()}
+function refreshHome(){const m=DB.getMembers(),t=DB.getTransactions(),td=new Date().toDateString(),tt=t.filter(x=>new Date(x.createdAt).toDateString()===td);document.getElementById('today-recharge').textContent='¥'+tt.filter(x=>x.type==='recharge').reduce((s,x)=>s+x.amount,0);document.getElementById('today-consume').textContent='¥'+tt.filter(x=>x.type==='consume').reduce((s,x)=>s+x.amount,0);document.getElementById('today-members').textContent=m.filter(x=>new Date(x.createdAt).toDateString()===td).length;document.getElementById('total-members').textContent=m.length;document.getElementById('total-recharge').textContent='¥'+t.filter(x=>x.type==='recharge').reduce((s,x)=>s+x.amount,0);const r=t.slice(-5).reverse(),el=document.getElementById('recent-txs');el.innerHTML=r.length===0?'<div class="empty">暂无交易记录</div>':r.map(x=>{const mb=m.find(y=>y.id===x.memberId)||{name:'未知'};return'<div class="tx-item"><div class="tx-info"><div>'+mb.name+' <span class="badge '+(x.type==='recharge'?'badge-green':'badge-orange')+'">'+(x.type==='recharge'?'充值':'消费')+'</span></div><div class="tx-time">'+new Date(x.createdAt).toLocaleString('zh-CN')+'</div></div><div class="tx-amount '+(x.type==='recharge'?'income':'expense')+'">'+(x.type==='recharge'?'+':'-')+'¥'+x.amount+'</div></div>'}).join('')}
+function refreshMembers(s=''){let m=DB.getMembers();if(s)m=m.filter(x=>x.name.includes(s)||x.phone.includes(s));const el=document.getElementById('member-list');el.innerHTML=m.length===0?'<div class="empty">'+(s?'未找到匹配的会员':'暂无会员，点击右上角添加')+'</div>':m.map(x=>'<div class="member-item" onclick="showMemberDetail(\''+x.id+'\')"><div class="member-avatar">'+x.name.charAt(0)+'</div><div class="member-info"><div class="member-name">'+x.name+'</div><div class="member-phone">'+x.phone+'</div></div><div class="member-balance">¥'+x.balance.toFixed(2)+'</div></div>').join('')}
+function searchMembers(){refreshMembers(document.getElementById('search-input').value)}
+function showMemberDetail(id){currentMemberId=id;const m=DB.getMembers(),t=DB.getTransactions(),mb=m.find(x=>x.id===id);if(!mb)return;const mt=t.filter(x=>x.memberId===id).slice(-20).reverse();document.getElementById('member-detail-content').innerHTML='<div class="card" style="text-align:center;margin-top:16px"><div class="member-avatar" style="width:64px;height:64px;font-size:24px;margin:0 auto 12px">'+mb.name.charAt(0)+'</div><div style="font-size:20px;font-weight:bold">'+mb.name+'</div><div style="color:#666;margin-top:4px">'+mb.phone+'</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0"><div class="balance-card"><div class="balance-label">账户余额</div><div class="balance-value">¥'+mb.balance.toFixed(2)+'</div></div><div class="balance-card" style="background:linear-gradient(135deg,#ffedd5,#fed7aa)"><div class="balance-label" style="color:#ea580c">积分</div><div class="balance-value" style="color:#c2410c">'+(mb.points||0)+'</div></div></div><div class="btn-group"><button class="btn btn-primary" onclick="showRechargeModal()">充值</button><button class="btn btn-secondary" onclick="showConsumeModal()">消费</button></div><div class="section-title">交易记录</div><div class="card">'+(mt.length===0?'<div class="empty">暂无交易记录</div>':mt.map(x=>'<div class="tx-item"><div class="tx-info"><span class="badge '+(x.type==='recharge'?'badge-green':'badge-orange')+'">'+(x.type==='recharge'?'充值':'消费')+'</span> '+(x.description||'')+'<div class="tx-time">'+new Date(x.createdAt).toLocaleString('zh-CN')+'</div></div><div class="tx-amount '+(x.type==='recharge'?'income':'expense')+'">'+(x.type==='recharge'?'+':'-')+'¥'+x.amount+'</div></div>').join(''))+'</div>';showPage('member-detail')}
+function showModal(id){document.getElementById(id).classList.remove('hidden')}
+function closeModal(id){document.getElementById(id).classList.add('hidden')}
+function showAddMemberModal(){showModal('modal-add-member')}
+function showRechargeModal(){const m=DB.getMembers().find(x=>x.id===currentMemberId);document.getElementById('recharge-current-balance').textContent='¥'+(m?.balance||0).toFixed(2);showModal('modal-recharge')}
+function showConsumeModal(){const m=DB.getMembers().find(x=>x.id===currentMemberId);document.getElementById('consume-current-balance').textContent='¥'+(m?.balance||0).toFixed(2);showModal('modal-consume')}
+function showAddServiceModal(){showModal('modal-add-service')}
+function addMember(){const n=document.getElementById('new-member-name').value.trim(),p=document.getElementById('new-member-phone').value.trim();if(!n||!p){alert('请填写姓名和手机号');return}const m=DB.getMembers();if(m.some(x=>x.phone===p)){alert('该手机号已注册');return}const mb={id:Date.now().toString(),name:n,phone:p,gender:document.getElementById('new-member-gender').value,birthday:document.getElementById('new-member-birthday').value,balance:parseFloat(document.getElementById('new-member-balance').value)||0,points:0,createdAt:new Date().toISOString()};m.push(mb);DB.setMembers(m);if(mb.balance>0){const t=DB.getTransactions();t.push({id:Date.now().toString(),memberId:mb.id,type:'recharge',amount:mb.balance,balance:mb.balance,description:'开卡充值',createdAt:new Date().toISOString()});DB.setTransactions(t)}closeModal('modal-add-member');document.getElementById('new-member-name').value='';document.getElementById('new-member-phone').value='';document.getElementById('new-member-balance').value='';refreshMembers();alert('添加成功！')}
+function doRecharge(){const a=parseFloat(document.getElementById('recharge-amount').value);if(!a||a<=0){alert('请输入正确的金额');return}const m=DB.getMembers(),i=m.findIndex(x=>x.id===currentMemberId);if(i===-1)return;m[i].balance+=a;m[i].points+=parseInt(document.getElementById('recharge-points').value)||0;DB.setMembers(m);const t=DB.getTransactions();t.push({id:Date.now().toString(),memberId:currentMemberId,type:'recharge',amount:a,balance:m[i].balance,description:'会员充值',createdAt:new Date().toISOString()});DB.setTransactions(t);closeModal('modal-recharge');document.getElementById('recharge-amount').value='';showMemberDetail(currentMemberId);alert('充值成功！')}
+function doConsume(){const a=parseFloat(document.getElementById('consume-amount').value);if(!a||a<=0){alert('请输入正确的金额');return}const m=DB.getMembers(),i=m.findIndex(x=>x.id===currentMemberId);if(i===-1)return;if(m[i].balance<a){alert('余额不足');return}m[i].balance-=a;DB.setMembers(m);const t=DB.getTransactions();t.push({id:Date.now().toString(),memberId:currentMemberId,type:'consume',amount:a,balance:m[i].balance,description:document.getElementById('consume-desc').value||'会员消费',createdAt:new Date().toISOString()});DB.setTransactions(t);closeModal('modal-consume');document.getElementById('consume-amount').value='';showMemberDetail(currentMemberId);alert('消费成功！')}
+function refreshServices(){const s=DB.getServices(),el=document.getElementById('service-list');el.innerHTML=s.length===0?'<div class="empty">暂无服务项目</div>':s.map(x=>'<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:500">'+x.name+'</div><div style="color:#16a34a;font-weight:bold;margin-top:4px">¥'+x.price.toFixed(2)+'</div></div><button class="btn btn-secondary" onclick="deleteService(\''+x.id+'\')">删除</button></div></div>').join('')}
+function addService(){const n=document.getElementById('new-service-name').value.trim(),p=parseFloat(document.getElementById('new-service-price').value);if(!n||!p){alert('请填写服务名称和价格');return}const s=DB.getServices();s.push({id:Date.now().toString(),name:n,price:p,duration:parseInt(document.getElementById('new-service-duration').value)||null,createdAt:new Date().toISOString()});DB.setServices(s);closeModal('modal-add-service');document.getElementById('new-service-name').value='';document.getElementById('new-service-price').value='';refreshServices();alert('添加成功！')}
+function deleteService(id){if(!confirm('确定删除该服务？'))return;DB.setServices(DB.getServices().filter(x=>x.id!==id));refreshServices()}
+function exportData(){const d={members:DB.getMembers(),transactions:DB.getTransactions(),services:DB.getServices()};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='barbershop-data-'+new Date().toISOString().split('T')[0]+'.json';a.click()}
+function clearAllData(){if(!confirm('确定清除所有数据？此操作不可恢复！'))return;localStorage.clear();refreshHome();alert('数据已清除')}
+refreshHome();
+</script>
+</body>
+</html>
