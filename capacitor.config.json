@@ -1,0 +1,8 @@
+{
+  "appId": "com.barbershop.member",
+  "appName": "理发店会员管理",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
