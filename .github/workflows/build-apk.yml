@@ -1,0 +1,43 @@
+name Build Android APK
+
+on
+  push
+    branches [ main ]
+  workflow_dispatch
+
+jobs
+  build
+    runs-on ubuntu-latest
+
+    steps
+    - uses actionscheckout@v4
+
+    - name Setup Java
+      uses actionssetup-java@v4
+      with
+        distribution 'temurin'
+        java-version '17'
+
+    - name Setup Node.js
+      uses actionssetup-node@v4
+      with
+        node-version '20'
+
+    - name Install Capacitor
+      run npm install -g @capacitorcli @capacitorcore @capacitorandroid
+
+    - name Init and Build
+      run 
+        npx cap init 理发店会员管理 com.barbershop.member --web-dir www
+        npx cap add android
+        npx cap sync android
+
+    - name Build APK
+      working-directory .android
+      run .gradlew assembleDebug
+
+    - name Upload APK
+      uses actionsupload-artifact@v4
+      with
+        name barbershop-apk
+        path androidappbuildoutputsapkdebugapp-debug.apk
