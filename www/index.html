@@ -225,7 +225,7 @@
                 <span id="db-size">计算中...</span><br><span id="storage-quota">正在检测存储配额...</span>
             </div>
             <div class="card" style="padding:0;overflow:hidden;">
-                <div class="settings-item" onclick="exportData()"><div><div style="font-weight:500;">导出数据</div><div style="font-size:12px;color:var(--text-light);">导出为JSON文件备份</div></div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+                <div class="settings-item" onclick="exportData()"><div><div style="font-weight:500;">导出数据</div><div style="font-size:12px;color:var(--text-light);">导出为JSON文件到手机文档目录</div></div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
                 <div class="settings-item" onclick="importData()"><div><div style="font-weight:500;">导入数据</div><div style="font-size:12px;color:var(--text-light);">从JSON文件导入</div></div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
                 <div class="settings-item" onclick="clearAllData()"><div><div style="font-weight:500;color:var(--danger);">清空数据</div><div style="font-size:12px;color:var(--text-light);">删除所有数据（不可恢复）</div></div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
             </div>
@@ -639,6 +639,35 @@
             }
         }
 
+        const EXPORT_FILE_NAME = '理发店客户数据.json';
+
+        function getCapacitorGlobal() {
+            return window.Capacitor || window.capacitor || null;
+        }
+
+        function getCapacitorPlugin(name) {
+            const cap = getCapacitorGlobal();
+            if (!cap) return null;
+            if (cap.Plugins && cap.Plugins[name]) return cap.Plugins[name];
+            if (cap[name]) return cap[name];
+            return null;
+        }
+
+        function isNativeCapacitorApp() {
+            const cap = getCapacitorGlobal();
+            if (!cap) return false;
+            try {
+                if (typeof cap.isNativePlatform === 'function') return cap.isNativePlatform();
+                if (typeof cap.getPlatform === 'function') {
+                    const platform = cap.getPlatform();
+                    return platform === 'android' || platform === 'ios';
+                }
+            } catch (err) {
+                console.warn('无法识别 Capacitor 运行环境：', err);
+            }
+            return false;
+        }
+
         async function exportData() {
             const members = await getAll('members');
             const services = await getAll('services');
@@ -651,16 +680,60 @@
                 exportTime: new Date().toISOString(),
                 note: '建议将备份文件保存到手机外部存储或云盘；卸载 App 或清除应用数据会导致本地数据库被删除。'
             };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const jsonText = JSON.stringify(data, null, 2);
+
+            if (isNativeCapacitorApp()) {
+                const Filesystem = getCapacitorPlugin('Filesystem');
+                if (Filesystem && typeof Filesystem.writeFile === 'function') {
+                    try {
+                        if (typeof Filesystem.requestPermissions === 'function') {
+                            try {
+                                await Filesystem.requestPermissions();
+                            } catch (permissionErr) {
+                                console.warn('请求存储权限失败或当前系统不需要该权限：', permissionErr);
+                            }
+                        }
+
+                        const result = await Filesystem.writeFile({
+                            path: EXPORT_FILE_NAME,
+                            data: jsonText,
+                            directory: 'DOCUMENTS',
+                            encoding: 'utf8',
+                            recursive: true
+                        });
+
+                        let savedUri = result && result.uri ? result.uri : '';
+                        if (!savedUri && typeof Filesystem.getUri === 'function') {
+                            try {
+                                const uriResult = await Filesystem.getUri({
+                                    path: EXPORT_FILE_NAME,
+                                    directory: 'DOCUMENTS'
+                                });
+                                savedUri = uriResult && uriResult.uri ? uriResult.uri : '';
+                            } catch (uriErr) {
+                                console.warn('获取导出文件路径失败：', uriErr);
+                            }
+                        }
+
+                        console.log('备份文件已保存：', savedUri || EXPORT_FILE_NAME);
+                        showToast('已保存到手机文档：' + EXPORT_FILE_NAME);
+                        return;
+                    } catch (nativeErr) {
+                        console.error('Capacitor 原生导出失败，将回退为浏览器下载：', nativeErr);
+                    }
+                }
+            }
+
+            const blob = new Blob([jsonText], { type: 'application/json;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'barber-shop-backup-' + new Date().toISOString().split('T')[0] + '.json';
+            a.download = EXPORT_FILE_NAME;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             setTimeout(() => URL.revokeObjectURL(url), 1000);
-            showToast('数据已导出，请妥善保存备份文件');
+            showToast('已导出：' + EXPORT_FILE_NAME);
         }
 
         async function importData() {
