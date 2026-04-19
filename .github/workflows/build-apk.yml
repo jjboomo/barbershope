@@ -24,11 +24,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
         run: |
           npm install
           npm install @capacitor/cli@6 @capacitor/core@6 @capacitor/android@6
+          npm install @capacitor/filesystem@6 @capacitor/share@6
 
       - name: Check Capacitor
         run: npx cap --version
